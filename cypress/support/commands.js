@@ -23,3 +23,16 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+
+
+Cypress.Commands.add('setGameStore', () => {
+  window.localStorage.setItem('pinia_state', JSON.stringify({
+    game: {
+      userName: 'El Primo',
+      userGameRegion: 'Kanto',
+      userGameMode: 'Facil',
+      fails: 0,
+      attempts: 0
+    }
+  }))
+})

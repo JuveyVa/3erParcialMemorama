@@ -1,34 +1,40 @@
 <template>
   <div class="memorama">
-    <h1>Memorama Pokemon</h1>
 
-    <div>
-      <p><strong>Jugador:</strong> {{ store.getUserName }}</p>
-      <p><strong>Región:</strong> {{ store.getUserGameRegion }}</p>
-      <p><strong>Dificultad:</strong> {{ store.getUserGameMode }}</p>
-      <p><strong>Fallos:</strong> {{ store.getFails }}</p>
-      <p><strong>Intentos:</strong> {{ store.getAttempts }}</p>
+    <div v-if="!isLoading">
+      <h1>Memorama Pokemon</h1>
+
+      <div>
+        <p><strong>Jugador:</strong> {{ store.getUserName }}</p>
+        <p><strong>Región:</strong> {{ store.getUserGameRegion }}</p>
+        <p><strong>Dificultad:</strong> {{ store.getUserGameMode }}</p>
+        <p><strong>Fallos:</strong> {{ store.getFails }}</p>
+        <p><strong>Intentos:</strong> {{ store.getAttempts }}</p>
+      </div>
     </div>
 
     <br />
 
     <div v-if="isLoading">
+      <h2>Comenzando partida</h2>
+      <p data-testid="player-name">Jugador: {{ store.getUserName }}</p>
+      <p data-testid="player-region">Región: {{ store.getUserGameRegion }}</p>
+      <p data-testid="player-difficulty">Dificultad: {{ store.getUserGameMode }}</p>
       <p>Cargando pokemones...</p>
     </div>
 
     <div v-else class="grid">
-      <div 
-        class="card" 
-        v-for="(card) in cartas" 
+      <CardComponent
+         v-for="card in cartas"
         :key="card.id"
-        @click="voltearCarta(card)"
-      >
-        <img 
-          :src="card.volteada ? card.imagenUrl : dittoUrl" 
-          alt="pokemon" 
-        />
-      </div>
+        :imagen-url="card.imagenUrl"
+        :volteada="card.volteada"
+        :ditto-url="dittoUrl"
+        :pokemon-name="card.nombre"
+        @click="() => voltearCarta(card)"
+      />
     </div>
+
   </div>
 </template>
 
@@ -40,6 +46,7 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
+import CardComponent from '@/components/CardComponent.vue'
 
 const store = useGameStore();
 const router = useRouter()
