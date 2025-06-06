@@ -139,12 +139,16 @@ describe('Pantalla de Juego', () => {
 
     const cardMap = new Map()
     
+    // Mapear las cartas y buscar un par
     cy.get('.card').each(($card, index) => {
       cy.wrap($card).find('img').invoke('attr', 'src').then(src => {
+        // Excluir la carta de Ditto (132.png)
         if (!src.includes('132.png')) {
           if (cardMap.has(src)) {
+            // Si ya existe la imagen en el mapa, agregar al arreglo
             cardMap.get(src).push(index)
           } else {
+            // Si es la primera vez que se encuentra, crear un nuevo arreglo
             cardMap.set(src, [index])
           }
         }
@@ -152,7 +156,6 @@ describe('Pantalla de Juego', () => {
     }).then(() => {
       cy.wait(3500)
       
-      // Verificar que inicialmente los fallos están en 0
       cy.contains('Fallos: 0').should('be.visible')
       
       const entries = Array.from(cardMap.entries())
