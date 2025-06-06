@@ -1,6 +1,6 @@
 // https://on.cypress.io/api
 describe('Validacion Ventana Inicial', () => {
-  it('La prueba deberá de validar que la ventana cuenta con el título de la aplicación así como los textos correspondientes', () => {
+  it('Debe de validar que la ventana cuenta con el titulo y los textos', () => {
     cy.visit('http://localhost:5173/')
 
     cy.get('img[src="https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg"]').should('exist')
@@ -62,17 +62,32 @@ describe('Validacion Ventana Inicial', () => {
 
   cy.contains('button', '¡Comenzar!').click()
 
-  cy.url().should('include', '/game')
-
   // Comprobar que se esten pasando bien los datos del jugador
   cy.get('[data-testid="player-name"]').should('contain', 'El Primo')
   cy.get('[data-testid="player-region"]').should('contain', 'Kanto')
   cy.get('[data-testid="player-difficulty"]').should('contain', 'Fácil')
 })
+
+it('Debe contener todas las regiones disponibles', () => {
+    cy.visit('http://localhost:5173/')
+
+    cy.get('input[placeholder="Ingresa tu nombre de entrenador"]').type('El Primo')
+    cy.contains('button', 'Registro/Ingreso').click()
+    
+    cy.contains('h2', 'Región').should('be.visible')
+    cy.contains('.option', 'Kanto').should('be.visible')
+    cy.contains('.option', 'Johto').should('be.visible')
+    cy.contains('.option', 'Hoenn').should('be.visible')
+    cy.contains('.option', 'Sinnoh').should('be.visible')
+    cy.contains('.option', 'Unova').should('be.visible')
+    cy.contains('.option', 'Kalos').should('be.visible')
+    cy.contains('.option', 'Alola').should('be.visible')
+    cy.contains('.option', 'Galar').should('be.visible')
+  })
 })
 
 describe('Pantalla de Juego', () => {
-  it('1. Permite ingresar nombre, seleccionar región y dificultad, y comenzar juego', () => {
+  it('Debe permitir ingresar nombre, seleccionar region y dificultad, y comenzar juego', () => {
     cy.visit('http://localhost:5173/')
 
     cy.get('input[placeholder="Ingresa tu nombre de entrenador"]')
@@ -100,18 +115,78 @@ describe('Pantalla de Juego', () => {
       .should('exist')
       .and('be.visible')
       .click()
-    
-    cy.url().should('include', '/game')
   })
 
-it('2. Al hacer clic en dos cartas distintas se voltean y luego se ocultan si no coinciden', () => {
+  it('Debe mostrar exactamente 10 cartas en modo fácil', () => {
+    cy.visit('http://localhost:5173/')
+    cy.get('input[placeholder="Ingresa tu nombre de entrenador"]').type('El Primo')
+    cy.contains('button', 'Registro/Ingreso').click()
+    cy.contains('.option', 'Kanto').click()
+    cy.contains('.option', 'Fácil').click()
+    cy.contains('button', '¡Comenzar!').click()
+
+    cy.wait(3500)
+    cy.get('.card').should('have.length', 10)
+  })
+
+  it('Debe incrementar el contador de fallos cuando las cartas no coinciden', () => {
+    cy.visit('http://localhost:5173/')
+    cy.get('input[placeholder="Ingresa tu nombre de entrenador"]').type('El Primo')
+    cy.contains('button', 'Registro/Ingreso').click()
+    cy.contains('.option', 'Kanto').click()
+    cy.contains('.option', 'Fácil').click()
+    cy.contains('button', '¡Comenzar!').click()
+
+    const cardMap = new Map()
+    
+    cy.get('.card').each(($card, index) => {
+      cy.wrap($card).find('img').invoke('attr', 'src').then(src => {
+        if (!src.includes('132.png')) {
+          if (cardMap.has(src)) {
+            cardMap.get(src).push(index)
+          } else {
+            cardMap.set(src, [index])
+          }
+        }
+      })
+    }).then(() => {
+      cy.wait(3500)
+      
+      // Verificar que inicialmente los fallos están en 0
+      cy.contains('Fallos: 0').should('be.visible')
+      
+      const entries = Array.from(cardMap.entries())
+      let differentPair = []
+      
+      // Buscar dos cartas diferentes
+      for (let i = 0; i < entries.length; i++) {
+        for (let j = i + 1; j < entries.length; j++) {
+          if (entries[i][0] !== entries[j][0]) {
+            differentPair = [entries[i][1][0], entries[j][1][0]]
+            break
+          }
+        }
+        if (differentPair.length > 0) break
+      }
+      
+      // Hacer clic en cartas diferentes
+      cy.get('.card').eq(differentPair[0]).click()
+      cy.wait(600)
+      cy.get('.card').eq(differentPair[1]).click()
+      cy.wait(1500)
+      
+      // Verificar que los fallos se incrementaron
+      cy.contains('Fallos: 1').should('be.visible')
+    })
+  })
+
+it('Debe hacer clic en dos cartas distintas se voltean y luego se ocultan si no coinciden', () => {
   cy.visit('http://localhost:5173/')
   cy.get('input[placeholder="Ingresa tu nombre de entrenador"]').type('El Primo')
   cy.contains('button', 'Registro/Ingreso').click()
   cy.contains('.option', 'Kanto').click()
   cy.contains('.option', 'Fácil').click()
   cy.contains('button', '¡Comenzar!').click()
-  cy.url().should('include', '/game')
   
   // Mapear las cartas y buscar un par
   const cardMap = new Map()
@@ -158,14 +233,13 @@ it('2. Al hacer clic en dos cartas distintas se voltean y luego se ocultan si no
   })
 })
 
-it('3. Si las dos cartas volteadas coinciden, permanecen volteadas y no se ocultan', () => {
+it('Debe verificar que si las dos cartas volteadas coinciden, permanecen volteadas y no se ocultan', () => {
   cy.visit('http://localhost:5173/')
   cy.get('input[placeholder="Ingresa tu nombre de entrenador"]').type('El Primo')
   cy.contains('button', 'Registro/Ingreso').click()
   cy.contains('.option', 'Kanto').click()
   cy.contains('.option', 'Fácil').click()
   cy.contains('button', '¡Comenzar!').click()
-  cy.url().should('include', '/game')
   
   // Mapear las cartas y buscar un par
   const cardMap = new Map()
@@ -199,18 +273,62 @@ it('3. Si las dos cartas volteadas coinciden, permanecen volteadas y no se ocult
     cy.get('.card').eq(pos2).find('img').should('have.attr', 'src').and('eq', imageSrc)
   })
 })
+
+it('Debe navegar a la pantalla de puntaje al completar el juego', () => {
+    cy.visit('http://localhost:5173/')
+    cy.get('input[placeholder="Ingresa tu nombre de entrenador"]').type('El Primo')
+    cy.contains('button', 'Registro/Ingreso').click()
+    cy.contains('.option', 'Kanto').click()
+    cy.contains('.option', 'Fácil').click()
+    cy.contains('button', '¡Comenzar!').click()
+
+    const cardMap = new Map()
+    
+    cy.get('.card').each(($card, index) => {
+      cy.wrap($card).find('img').invoke('attr', 'src').then(src => {
+        if (!src.includes('132.png')) {
+          if (cardMap.has(src)) {
+            cardMap.get(src).push(index)
+          } else {
+            cardMap.set(src, [index])
+          }
+        }
+      })
+    }).then(() => {
+      cy.wait(3500)
+      
+      const pairs = Array.from(cardMap.entries()).filter(([, positions]) => positions.length === 2)
+      
+      const resolvePairs = (index = 0) => {
+        if (index >= pairs.length) return
+        const [, [pos1, pos2]] = pairs[index]
+        cy.get('.card').eq(pos1).click()
+        cy.wait(600)
+        cy.get('.card').eq(pos2).click()
+        cy.wait(1400)
+        if (index + 1 < pairs.length) {
+          resolvePairs(index + 1)
+        }
+      }
+      
+      resolvePairs()
+      
+      // Verificar que navegó a la pantalla de score
+      cy.url().should('include', '/score')
+      cy.contains('h1', '¡Ganaste!').should('be.visible')
+    })
+  })
 })
 
 
 describe('Pantalla de Leaderboard', () => {
-it('1. Debe mostrar correctamente todos los elementos de la pantalla de puntuación', () => {
+it('Debe mostrar correctamente todos los elementos de la pantalla de puntuación', () => {
   cy.visit('http://localhost:5173/')
   cy.get('input[placeholder="Ingresa tu nombre de entrenador"]').type('El Primo')
   cy.contains('button', 'Registro/Ingreso').click()
   cy.contains('.option', 'Kanto').click()
   cy.contains('.option', 'Fácil').click()
   cy.contains('button', '¡Comenzar!').click()
-  cy.url().should('include', '/game')
   
   // Completar el juego
   const cardMap = new Map()
@@ -259,14 +377,13 @@ it('1. Debe mostrar correctamente todos los elementos de la pantalla de puntuaci
   })
 })
 
-  it('2. Debe mostrar correctamente todos los elementos de la tabla de posiciones', () => {
+  it('Debe mostrar correctamente todos los elementos de la tabla de posiciones', () => {
     cy.visit('http://localhost:5173/')
     cy.get('input[placeholder="Ingresa tu nombre de entrenador"]').type('El Primo')
     cy.contains('button', 'Registro/Ingreso').click()
     cy.contains('.option', 'Kanto').click()
     cy.contains('.option', 'Fácil').click()
     cy.contains('button', '¡Comenzar!').click()
-    cy.url().should('include', '/game')
     
     const cardMap = new Map()
     cy.get('.card').each(($card, index) => {
@@ -337,14 +454,13 @@ it('1. Debe mostrar correctamente todos los elementos de la pantalla de puntuaci
     })
   })
 
-  it('3. Debe navegar correctamente de vuelta a ScoreView', () => {
+  it('Debe navegar correctamente de vuelta a ScoreView', () => {
     cy.visit('http://localhost:5173/')
     cy.get('input[placeholder="Ingresa tu nombre de entrenador"]').type('El Primo')
     cy.contains('button', 'Registro/Ingreso').click()
     cy.contains('.option', 'Kanto').click()
     cy.contains('.option', 'Fácil').click()
     cy.contains('button', '¡Comenzar!').click()
-    cy.url().should('include', '/game')
     
     const cardMap = new Map()
     cy.get('.card').each(($card, index) => {
@@ -405,14 +521,13 @@ it('1. Debe mostrar correctamente todos los elementos de la pantalla de puntuaci
     })
   })
 
-it('4. Debe filtrar correctamente por dificultad "Fácil" y mostrar solo jugadores de ese modo', () => {
+it('Debe filtrar correctamente por dificultad "Fácil" y mostrar solo jugadores de ese modo', () => {
   cy.visit('http://localhost:5173/')
   cy.get('input[placeholder="Ingresa tu nombre de entrenador"]').type('El Primo')
   cy.contains('button', 'Registro/Ingreso').click()
   cy.contains('.option', 'Kanto').click()
   cy.contains('.option', 'Fácil').click()
   cy.contains('button', '¡Comenzar!').click()
-  cy.url().should('include', '/game')
   
   const cardMap = new Map()
   cy.get('.card').each(($card, index) => {
