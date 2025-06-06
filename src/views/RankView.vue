@@ -41,7 +41,7 @@ const estaFueraDelTop = computed(() => playerIndex.value >= 10)
       <label for="modo">Filtrar por dificultad:</label>
       <select id="modo" v-model="modoSeleccionado">
         <option value="Todos">Todos</option>
-        <option value="Facil">Fácil</option>
+        <option value="Fácil">Fácil</option>
         <option value="Medio">Medio</option>
         <option value="Dificil">Difícil</option>
       </select>
